@@ -3,8 +3,10 @@ from business_layer.schemas import *
 from typing import List, Dict
 import sqlite3
 from passlib.context import CryptContext
+from datetime import datetime
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 class UserService:
     @staticmethod
@@ -183,6 +185,49 @@ class AdminService:
             return {"message": f"✅ Certificate sent to {username}"}
         except Exception as e:
             conn.rollback()
+            raise e
+        finally:
+            conn.close()
+
+class UserStatsService:
+    @staticmethod
+    def get_user_points(username: str) -> Dict:
+        conn = get_db_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT SUM(l.points) as total_points
+                FROM logs l
+                JOIN users u ON l.user_id = u.id
+                WHERE u.username = ?
+            """, (username,))
+            result = cursor.fetchone()
+            total = result[0] if result[0] is not None else 0
+            return {"username": username, "points": total}
+        except Exception as e:
+            raise e
+        finally:
+            conn.close()
+
+    @staticmethod
+    def get_user_history(username: str) -> List[Dict]:
+        conn = get_db_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT a.action, l.points, l.timestamp 
+                FROM logs l
+                JOIN actions a ON l.action_id = a.id
+                JOIN users u ON l.user_id = u.id
+                WHERE u.username = ?
+                ORDER BY l.timestamp DESC
+            """, (username,))
+            return [{
+                "action": row[0],
+                "points": row[1],
+                "timestamp": row[2]
+            } for row in cursor.fetchall()]
+        except Exception as e:
             raise e
         finally:
             conn.close()

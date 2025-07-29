@@ -2,21 +2,24 @@ from fastapi import APIRouter, HTTPException
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+##dsvsdvsdvsd
 from business_layer.services import (
     UserService,
     ActionService,
     LeaderboardService,
-    AdminService
+    AdminService,
+    UserStatsService  # Add this import
 )
-from business_layer.schemas import (  # Add this import
+from business_layer.schemas import (
     UserSignup,
     UserLogin,
     LogRequest,
     AdminLogin,
     ResetRequest,
     MessageRequest,
-    EcoActionCreate
+    EcoActionCreate,
+    UserPointsResponse,  # Add these new schemas
+    UserHistoryResponse
 )
 router = APIRouter()
 
@@ -61,6 +64,21 @@ def get_leaderboard():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/user-points/{username}", response_model=UserPointsResponse)
+def get_user_points(username: str):
+    try:
+        return UserStatsService.get_user_points(username)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/user-history/{username}", response_model=UserHistoryResponse)
+def get_user_history(username: str):
+    try:
+        history = UserStatsService.get_user_history(username)
+        return {"history": history}  # Ensure this matches UserHistoryResponse model
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/admin/login")
 def admin_login(admin: AdminLogin):
     if AdminService.authenticate_admin(admin.username, admin.password):
@@ -91,3 +109,7 @@ def add_eco_action(action: EcoActionCreate):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/")
+def read_root():
+    return {"message": "Welcome to Eco-Action Tracker API"}

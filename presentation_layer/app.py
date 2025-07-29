@@ -25,7 +25,7 @@ def main(page: ft.Page):
     action_dropdown = ft.Dropdown(label="Select Eco-Action", width=300)
     history_column = ft.Column()
     leaderboard_column = ft.Column()
-    total_points_text = ft.Text("Points: 0", size=14, weight="bold", text_align=ft.TextAlign.END)
+    total_points_text = ft.Text("Points: 0", size=20, weight="bold", text_align=ft.TextAlign.RIGHT)
 
     def show_admin_login(e=None):
         def admin_login(e):
@@ -258,7 +258,7 @@ def main(page: ft.Page):
                 try:
                     resp = requests.get(f"{API_BASE}/user-history/{current_user['username']}")
                     if resp.status_code == 200:
-                        history_data = resp.json()
+                        history_data = resp.json().get("history", [])
                         history_column.controls.clear()
                         for action in history_data:
                             history_column.controls.append(
@@ -268,6 +268,10 @@ def main(page: ft.Page):
                                 )
                             )
                         page.update()
+                    else:
+                        feedback_text.value = "❌ Failed to load history {resp.status_code}"
+                        page.update()
+
                 except Exception as e:
                     feedback_text.value = f"⚠️ Error loading history: {str(e)}"
                     page.update()

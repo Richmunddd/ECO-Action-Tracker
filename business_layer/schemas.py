@@ -27,3 +27,15 @@ class ResetRequest(BaseModel):
 class MessageRequest(BaseModel):
     username: str
     message: str
+
+class UserPointsResponse(BaseModel):
+    username: str
+    points: int
+
+class UserHistoryItem(BaseModel):
+    action: str
+    points: int
+    timestamp: str
+
+class UserHistoryResponse(BaseModel):
+    history: List[UserHistoryItem]
